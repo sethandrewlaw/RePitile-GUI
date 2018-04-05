@@ -1,5 +1,10 @@
 import tkinter as tk
 import time
+import os
+
+from tkinter import filedialog
+
+#PATHNAME = ""
 
 #Initialization of root window as Tk subclass
 class RePitile(tk.Tk):
@@ -36,10 +41,24 @@ class RePitile(tk.Tk):
         frame = self.frames[page_name]
         frame.tkraise()
         
-    #Function call to destroy root program   
+    #Method to destroy root program   
     def quitprogram(self):
     
         self.destroy()
+
+    #Method to load configuration file
+    def loadfile(self):
+
+        file_name = filedialog.askopenfilename(initialdir=()) #Specify directory with PATHNAME @ top
+
+        try:
+
+            with open(file_name) as test_file:
+
+                print(test_file.read())
+        except:
+
+            print("No file exists or no file selected")
         
 #Class for Main Window        
 class MainFrame(tk.Frame):
@@ -51,45 +70,37 @@ class MainFrame(tk.Frame):
 
         #Label for clock
         self.clock_label = tk.Label(self, text=time.strftime("%I:%M %p"), font=("Times", 60))
-        self.clock_label.grid(column = 1)
+        self.clock_label.grid(row = 0, column = 2)
 
-        #Label for Temp1
-        temp1_label = tk.Label(self, text = "Temp 1", font = ("Consolas 20 underline"))
-        temp1_label.grid(row = 1, column = 0, pady = 20)
-
-        #Label for Temp2
-        temp2_label = tk.Label(self, text = "Temp 2", font = ("Consolas 20 underline"))
-        temp2_label.grid(row = 1, column = 1)
+        #Label for Temp
+        temp1_label = tk.Label(self, text = "Average Temp", font = ("Consolas 20 underline"))
+        temp1_label.grid(row = 1, column = 1, pady = 20)
 
         #Label for Humidity
         humidity_label = tk.Label(self, text = "Humidity", font = ("Consolas 20 underline"))
-        humidity_label.grid(row = 1, column = 2)
+        humidity_label.grid(row = 1, column = 3)
 
-        #Data for Temp1
-        temp1_data = tk.Label(self, text = "100ºF", font = ("Times 65"))
-        temp1_data.grid(row = 2, column = 0)
-        
-        #Data for Temp2
-        temp1_data = tk.Label(self, text = "100ºF", font = ("Times 65"))
-        temp1_data.grid(row = 2, column = 1)
+        #Data for Temp
+        temp_data = tk.Label(self, text = "100 ºF", font = ("Times 65"))
+        temp_data.grid(row = 2, column = 1)
         
         #Data for Humidity
-        temp1_data = tk.Label(self, text = "100%", font = ("Times 65"))
-        temp1_data.grid(row = 2, column = 2)
+        temp_data = tk.Label(self, text = "100%", font = ("Times 65"))
+        temp_data.grid(row = 2, column = 3)
 
         #Label for current profile
         profile_label = tk.Label(self, text = "Current Profile: Snake", font = ("Times 25"))
-        profile_label.grid(row = 3, column = 1, pady = 10)
+        profile_label.grid(row = 3, column = 2, pady = 10)
 
         #Quit Button
         quit_button = tk.Button(self, text = "Quit", font = ("12"), width = 20, height = 7,
                                 command = lambda: controller.quitprogram())
-        quit_button.grid(row = 4, columnspan = 1, padx = 30)
+        quit_button.grid(row = 4, column = 1, padx = 30)
         
         #Settings Button
         settings_button = tk.Button(self, text = "Settings", font = ("12"), width = 20, height = 7,
                                 command = lambda: controller.showframe("SettingsFrame"))
-        settings_button.grid(row = 4, column = 2)
+        settings_button.grid(row = 4, column = 3)
 
     #Function used to make clock label 'tick'
     def clocktick(self):
@@ -102,20 +113,99 @@ class MainFrame(tk.Frame):
 class SettingsFrame(tk.Frame):
 
     def __init__(self, parent, controller):
-    
+ 
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        back_button = tk.Button(self, text = "Back", width = 20, height = 7,
+        self.mintemp = tk.IntVar(0)
+        self.maxtemp = tk.IntVar(0)
+        self.humidity = tk.IntVar(0)
+
+        #Create back button
+        back_button = tk.Button(self, text = "Back", font = ("12"), width = 20, height = 7,
                                 command = lambda: controller.showframe("MainFrame"))
-        back_button.pack(side = "left")
+        back_button.grid(row = 2, column = 0, pady = 10)
+
+        #Create load button
+        load_button = tk.Button(self, text = "Load Profile", font = ("12"), width = 20, height = 7,
+                                command = lambda: controller.loadfile())
+        load_button.grid(row = 0, column = 0, pady = 10)
+
+        #Create save button
+        save_button = tk.Button(self, text = "Save Profile", font = ("12"), width = 20, height = 7)
+        save_button.grid(row = 1, column = 0, pady = 10)
+
+        #Create arrow buttons for custom profile
+        mintemp_up = tk.Button(self, text = "Min Temp\n\n▲", font = ("20"), width  = 10, height = 5,
+                               command = self.incmintemp)
+        mintemp_up.grid(row = 0, column = 1, padx = 50)
+
+        maxtemp_up = tk.Button(self, text = "Max Temp\n\n▲", font = ("20"), width  = 10, height = 5,
+                               command = self.incmaxtemp)
+        maxtemp_up.grid(row = 0, column = 2, padx = 50)
+        
+        humidity_up = tk.Button(self, text = "Humidity\n\n▲", font = ("20"), width  = 10, height = 5,
+                                command = self.inchumidity)
+        humidity_up.grid(row = 0, column = 3, padx = 50)
+
+        mintemp_down = tk.Button(self, text = "▼\n\nMin Temp", font = ("20"), width  = 10, height = 5,
+                                 command = self.decmintemp)
+        mintemp_down.grid(row = 2, column = 1)
+
+        maxtemp_down = tk.Button(self, text = "▼\n\nMax Temp", font = ("20"), width  = 10, height = 5,
+                                 command = self.decmaxtemp)
+        maxtemp_down.grid(row = 2, column = 2)
+
+        humidity_down = tk.Button(self, text = "▼\n\nHumidity", font = ("20"), width  = 10, height = 5,
+                                  command = self.dechumidity)
+        humidity_down.grid(row = 2, column = 3)
+
+        #Create labels with custom profile info
+
+        self.mintemp_label = tk.Label(self, text=str(
+            self.mintemp.get()) + "ºC", font=("Times 60"))
+        self.mintemp_label.grid(row=1, column=1)
+
+        self.maxtemp_label = tk.Label(self, text=str(
+            self.maxtemp.get()) + "ºC", font=("Times 60"))
+        self.maxtemp_label.grid(row=1, column=2)
+
+        self.humidity_label = tk.Label(self, text=str(
+            self.humidity.get()) + "%", font=("Times 60"))
+        self.humidity_label.grid(row=1, column=3)
+
+    
+    #Methods to increment/decrement values and update labels
+    def incmintemp(self):
+        self.mintemp.set(self.mintemp.get() + 1)
+        self.mintemp_label["text"] = str(str(self.mintemp.get()) + "ºC")
+
+    def decmintemp(self):
+        self.mintemp.set(self.mintemp.get() - 1)
+        self.mintemp_label["text"] = str(str(self.mintemp.get()) + "ºC")
+
+    def incmaxtemp(self):
+        self.maxtemp.set(self.maxtemp.get() + 1)
+        self.maxtemp_label["text"] = str(str(self.maxtemp.get()) + "ºC")
+
+    def decmaxtemp(self):
+        self.maxtemp.set(self.maxtemp.get() - 1)
+        self.maxtemp_label["text"] = str(str(self.maxtemp.get()) + "ºC")
+
+    def inchumidity(self):
+        self.humidity.set(self.humidity.get() + 1)
+        self.humidity_label["text"] = str(str(self.humidity.get()) + "%")
+
+    def dechumidity(self):
+        self.humidity.set(self.humidity.get() - 1)
+        self.humidity_label["text"] = str(str(self.humidity.get()) + "%")
 
 #Main program code
 if __name__ == "__main__":
     
     app = RePitile()
     app.geometry("800x480")
-    app.overrideredirect(1)
+    #app.overrideredirect(1)
     app.resizable(False, False)
     app.frames["MainFrame"].clocktick()
     app.mainloop()
